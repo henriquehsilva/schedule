@@ -1,6 +1,7 @@
-import React from 'react';
-import { formatDateHeader } from '../utils/dateUtils';
+import React, { useEffect, useState } from 'react';
+import { formatDateHeader, getEventsForDay } from '../utils/dateUtils';
 import { Calendar, Bell } from 'lucide-react';
+import { useEvents } from '../context/EventsContext';
 import { checkNotificationPermission } from '../utils/notificationUtils';
 
 interface HeaderProps {
@@ -9,6 +10,17 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ selectedDate, onDateChange }) => {
+  const { state } = useEvents();
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const todayEvents = getEventsForDay(state.events, selectedDate);
+    const completed = todayEvents.filter(e => e.completed).length;
+    const total = todayEvents.length;
+    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+    setProgress(pct);
+  }, [selectedDate, state.events]);
+
   const handlePreviousDay = () => {
     const newDate = new Date(selectedDate);
     newDate.setDate(selectedDate.getDate() - 1);
@@ -45,12 +57,12 @@ const Header: React.FC<HeaderProps> = ({ selectedDate, onDateChange }) => {
           <Bell className="w-5 h-5 text-primary-400" />
         </button>
       </div>
-      
+
       <div className="mt-2 flex flex-col sm:flex-row sm:justify-between sm:items-center">
         <h2 className="text-xl font-semibold capitalize">
           {formatDateHeader(selectedDate)}
         </h2>
-        
+
         <div className="flex mt-2 sm:mt-0 space-x-2">
           <button 
             onClick={handlePreviousDay}
@@ -72,6 +84,17 @@ const Header: React.FC<HeaderProps> = ({ selectedDate, onDateChange }) => {
           >
             Próximo
           </button>
+        </div>
+      </div>
+
+      {/* Barra de Progresso */}
+      <div className="mt-4">
+        <p className="text-xs text-gray-400 mb-1">Progresso do dia: {progress}%</p>
+        <div className="w-full bg-dark-300 rounded-full h-3">
+          <div
+            className="bg-purple-500 h-3 rounded-full transition-all duration-300 ease-in-out"
+            style={{ width: `${progress}%` }}
+          />
         </div>
       </div>
     </header>
