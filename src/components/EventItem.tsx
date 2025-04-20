@@ -15,6 +15,7 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
   const isCurrent = isEventCurrent(event);
   const [showTextarea, setShowTextarea] = useState(false);
   const [observation, setObservation] = useState('');
+  const [isSaved, setIsSaved] = useState(false);
 
   const handleToggleComplete = () => {
     dispatch({ type: 'TOGGLE_EVENT_COMPLETED', payload: event.id });
@@ -28,8 +29,8 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
         observation: observation.trim(),
         createdAt: serverTimestamp(),
       });
-      setObservation('');
-      setShowTextarea(false);
+
+      setIsSaved(true);
       alert('Observação salva com sucesso!');
     } catch (error) {
       console.error('Erro ao salvar observação:', error);
@@ -95,7 +96,7 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
             onClick={handleSaveObservation}
             className="mt-2 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
           >
-            Salvar observação
+            {isSaved ? 'Editar observação' : 'Salvar observação'}
           </button>
         </div>
       )}
@@ -104,4 +105,3 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
 };
 
 export default EventItem;
-  
