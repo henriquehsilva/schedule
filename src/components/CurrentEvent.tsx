@@ -17,11 +17,9 @@ const CurrentEvent: React.FC<CurrentEventProps> = ({ selectedDate }) => {
     const updateCurrentEvent = () => {
       const todayEvents = getEventsForDay(state.events, new Date());
       
-      // Find current ongoing event
       const current = todayEvents.find(event => isEventCurrent(event) && !event.completed);
       setCurrentEvent(current || null);
       
-      // Find next upcoming event
       if (current) {
         setTimeRemaining(getTimeRemaining(current));
       }
@@ -48,7 +46,6 @@ const CurrentEvent: React.FC<CurrentEventProps> = ({ selectedDate }) => {
     
     updateCurrentEvent();
     
-    // Update every minute
     const interval = setInterval(updateCurrentEvent, 60000);
     return () => clearInterval(interval);
   }, [state.events, selectedDate]);
