@@ -2,6 +2,8 @@ import React, { createContext, useContext, useEffect, useReducer } from 'react';
 import { Event, EventAction, EventCategory, EventsState } from '../types/Event';
 import { initializeAppData, saveEvents, saveCategories } from '../utils/storageUtils';
 import { scheduleNotificationsForEvents } from '../utils/notificationUtils';
+import { db } from '../firebase';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 
 const initialState: EventsState = {
   events: [],
@@ -36,6 +38,7 @@ const eventsReducer = (state: EventsState, action: EventAction): EventsState => 
           ? { ...event, completed: !event.completed }
           : event
       );
+      saveEvents(updatedEvents);
       return {
         ...state,
         events: updatedEvents,
@@ -61,6 +64,11 @@ const eventsReducer = (state: EventsState, action: EventAction): EventsState => 
         ...state,
         events: filteredEvents
       };
+    case 'SET_EVENTS':
+      return {
+        ...state,
+        events: action.payload
+      };
     default:
       return state;
   }
@@ -71,14 +79,38 @@ export const EventsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   useEffect(() => {
     const appData = initializeAppData();
-    
     dispatch({ type: 'INITIALIZE_EVENTS', payload: appData.events });
     dispatch({ type: 'INITIALIZE_CATEGORIES', payload: appData.categories });
   }, []);
 
   useEffect(() => {
+    const fetchCompletedStatuses = async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const q = query(collection(db, 'observations'), where('date', '==', today));
+      const snapshot = await getDocs(q);
+      const completedMap: Record<string, boolean> = {};
+      snapshot.forEach(doc => {
+        const { title, completed } = doc.data();
+        if (title && typeof completed === 'boolean') {
+          completedMap[title] = completed;
+        }
+      });
+
+      const updated = state.events.map(event => ({
+        ...event,
+        completed: completedMap[event.title] ?? event.completed
+      }));
+
+      dispatch({ type: 'SET_EVENTS', payload: updated });
+    };
+
+    if (state.initialized) {
+      fetchCompletedStatuses();
+    }
+  }, [state.initialized]);
+
+  useEffect(() => {
     if (state.initialized && state.events.length > 0) {
-      // Schedule notifications for today's events
       scheduleNotificationsForEvents(state.events);
     }
   }, [state.initialized, state.events]);

@@ -26,13 +26,12 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
   const [observation, setObservation] = useState('');
   const [isSaved, setIsSaved] = useState(false);
   const [observationId, setObservationId] = useState<string | null>(null);
+  const [localCompleted, setLocalCompleted] = useState(event.completed);
 
   const today = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
     const fetchObservation = async () => {
-      if (!event?.title) return;
-
       try {
         const q = query(
           collection(db, 'observations'),
@@ -44,6 +43,7 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
         if (!snapshot.empty) {
           const docData = snapshot.docs[0];
           setObservation(docData.data().observation || '');
+          setLocalCompleted(docData.data().completed || false);
           setIsSaved(true);
           setObservationId(docData.id);
         }
@@ -53,24 +53,33 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
     };
 
     fetchObservation();
-  }, [event?.title, today]);
+  }, [event.title, today]);
 
   const handleToggleComplete = async () => {
+    const updated = !localCompleted;
+    setLocalCompleted(updated);
     dispatch({ type: 'TOGGLE_EVENT_COMPLETED', payload: event.id });
 
     try {
-      if (!event?.id) return;
-
-      const ref = doc(db, 'events', event.id);
-      await updateDoc(ref, { completed: !event.completed });
+      if (observationId) {
+        const ref = doc(db, 'observations', observationId);
+        await updateDoc(ref, { completed: updated });
+      } else {
+        const newDoc = await addDoc(collection(db, 'observations'), {
+          date: today,
+          title: event.title,
+          observation: '',
+          completed: updated,
+          createdAt: serverTimestamp()
+        });
+        setObservationId(newDoc.id);
+      }
     } catch (error) {
-      console.error('Erro ao atualizar evento:', error);
+      console.error('Erro ao atualizar status de conclusão:', error);
     }
   };
 
   const handleSaveObservation = async () => {
-    if (!event?.title) return;
-
     try {
       if (observationId) {
         const ref = doc(db, 'observations', observationId);
@@ -80,6 +89,7 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
           date: today,
           title: event.title,
           observation: observation.trim(),
+          completed: localCompleted,
           createdAt: serverTimestamp()
         });
         setObservationId(newDoc.id);
@@ -93,13 +103,11 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
     }
   };
 
-  if (!event?.title || !event.timeRange || !event.category) return null;
-
   return (
     <div className="mb-3">
       <div
         className={`event-item flex items-center p-3 rounded-lg cursor-pointer transition-all ${
-          event.completed
+          localCompleted
             ? 'bg-dark-300 opacity-60'
             : isCurrent
             ? 'ring-2 ring-primary-400 bg-primary-900/30'
@@ -113,7 +121,9 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
         />
 
         <div className="flex-grow">
-          <h3 className="font-medium text-white">{event.title}</h3>
+          <h3 className={`font-medium text-white ${localCompleted ? 'line-through text-gray-500' : ''}`}>
+            {event.title}
+          </h3>
           <div className="flex items-center text-sm text-gray-400 mt-1">
             <Clock className="w-3.5 h-3.5 mr-1" />
             <span>
@@ -128,14 +138,14 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
             handleToggleComplete();
           }}
           className={`ml-2 p-2 rounded-full transition-all ${
-            event.completed
+            localCompleted
               ? 'bg-primary-500/20 text-primary-400'
               : 'bg-dark-300 text-gray-400 hover:bg-dark-200'
           }`}
-          aria-label={event.completed ? 'Marcar como incompleto' : 'Marcar como concluído'}
+          aria-label={localCompleted ? 'Marcar como incompleto' : 'Marcar como concluído'}
         >
           <CheckCircle2
-            className={`w-5 h-5 ${event.completed ? 'fill-primary-500 text-white' : ''}`}
+            className={`w-5 h-5 ${localCompleted ? 'fill-primary-500 text-white' : ''}`}
           />
         </button>
       </div>

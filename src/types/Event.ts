@@ -32,4 +32,5 @@ export type EventAction =
   | { type: 'RESET_COMPLETED_EVENTS' }
   | { type: 'ADD_EVENT'; payload: Event }
   | { type: 'DELETE_EVENT'; payload: string }
-  | { type: 'INITIALIZE_CATEGORIES'; payload: EventCategory[] };
+  | { type: 'INITIALIZE_CATEGORIES'; payload: EventCategory[] }
+  | { type: 'SET_EVENTS'; payload: Event[] };
