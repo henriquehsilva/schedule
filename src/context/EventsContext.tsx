@@ -31,15 +31,14 @@ const eventsReducer = (state: EventsState, action: EventAction): EventsState => 
         categories: action.payload
       };
     case 'TOGGLE_EVENT_COMPLETED':
-      const updatedEvents = state.events.map(event => 
+      const updatedEvents = state.events.map(event =>
         event.id === action.payload
           ? { ...event, completed: !event.completed }
           : event
       );
-      saveEvents(updatedEvents);
       return {
         ...state,
-        events: updatedEvents
+        events: updatedEvents,
       };
     case 'RESET_COMPLETED_EVENTS':
       const resetEvents = state.events.map(event => ({ ...event, completed: false }));
