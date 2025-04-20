@@ -1,10 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock, CheckCircle2 } from 'lucide-react';
 import { Event } from '../types/Event';
 import { formatTime, isEventCurrent } from '../utils/dateUtils';
 import { useEvents } from '../context/EventsContext';
 import { db } from '../firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+  query,
+  where,
+  getDocs,
+  updateDoc,
+  doc
+} from 'firebase/firestore';
 
 interface EventItemProps {
   event: Event;
@@ -16,6 +25,29 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
   const [showTextarea, setShowTextarea] = useState(false);
   const [observation, setObservation] = useState('');
   const [isSaved, setIsSaved] = useState(false);
+  const [observationId, setObservationId] = useState<string | null>(null);
+
+  const today = new Date().toISOString().split('T')[0];
+
+  useEffect(() => {
+    const fetchObservation = async () => {
+      const q = query(
+        collection(db, 'observations'),
+        where('date', '==', today),
+        where('title', '==', event.title)
+      );
+
+      const snapshot = await getDocs(q);
+      if (!snapshot.empty) {
+        const docData = snapshot.docs[0];
+        setObservation(docData.data().observation || '');
+        setIsSaved(true);
+        setObservationId(docData.id);
+      }
+    };
+
+    fetchObservation();
+  }, [event.title, today]);
 
   const handleToggleComplete = () => {
     dispatch({ type: 'TOGGLE_EVENT_COMPLETED', payload: event.id });
@@ -23,12 +55,20 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
 
   const handleSaveObservation = async () => {
     try {
-      await addDoc(collection(db, 'observations'), {
-        date: new Date().toISOString().split('T')[0],
-        title: event.title,
-        observation: observation.trim(),
-        createdAt: serverTimestamp(),
-      });
+      if (observationId) {
+        // atualizar
+        const ref = doc(db, 'observations', observationId);
+        await updateDoc(ref, { observation: observation.trim() });
+      } else {
+        // criar
+        const newDoc = await addDoc(collection(db, 'observations'), {
+          date: today,
+          title: event.title,
+          observation: observation.trim(),
+          createdAt: serverTimestamp()
+        });
+        setObservationId(newDoc.id);
+      }
 
       setIsSaved(true);
       alert('Observação salva com sucesso!');
