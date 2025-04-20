@@ -66,7 +66,7 @@ export const scheduleNotificationsForEvents = (events: Event[]) => {
   }
   
   const today = new Date();
-  const dayOfWeek = today.toLocaleDateString('en-US', { weekday: 'lowercase' }) as any;
+  const dayOfWeek = today.toLocaleDateString('en-US', { weekday: 'long' }) as any;
   
   const todayEvents = events.filter(event => 
     event.daysOfWeek.includes(dayOfWeek) && !event.completed
