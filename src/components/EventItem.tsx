@@ -31,46 +31,51 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
 
   useEffect(() => {
     const fetchObservation = async () => {
-      const q = query(
-        collection(db, 'observations'),
-        where('date', '==', today),
-        where('title', '==', event.title)
-      );
+      if (!event?.title) return;
 
-      const snapshot = await getDocs(q);
-      if (!snapshot.empty) {
-        const docData = snapshot.docs[0];
-        setObservation(docData.data().observation || '');
-        setIsSaved(true);
-        setObservationId(docData.id);
+      try {
+        const q = query(
+          collection(db, 'observations'),
+          where('date', '==', today),
+          where('title', '==', event.title)
+        );
+
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+          const docData = snapshot.docs[0];
+          setObservation(docData.data().observation || '');
+          setIsSaved(true);
+          setObservationId(docData.id);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar observação:', error);
       }
     };
 
     fetchObservation();
-  }, [event.title, today]);
+  }, [event?.title, today]);
 
   const handleToggleComplete = async () => {
-    const updatedStatus = !event.completed;
-
     dispatch({ type: 'TOGGLE_EVENT_COMPLETED', payload: event.id });
-  
+
     try {
-      // Atualiza o campo 'completed' do evento no Firestore
-      const ref = doc(db, 'events', event.id); // event.id precisa ser o ID real no Firebase
-      await updateDoc(ref, { completed: updatedStatus });
+      if (!event?.id) return;
+
+      const ref = doc(db, 'events', event.id);
+      await updateDoc(ref, { completed: !event.completed });
     } catch (error) {
       console.error('Erro ao atualizar evento:', error);
     }
   };
 
   const handleSaveObservation = async () => {
+    if (!event?.title) return;
+
     try {
       if (observationId) {
-        // atualizar
         const ref = doc(db, 'observations', observationId);
         await updateDoc(ref, { observation: observation.trim() });
       } else {
-        // criar
         const newDoc = await addDoc(collection(db, 'observations'), {
           date: today,
           title: event.title,
@@ -88,6 +93,8 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
     }
   };
 
+  if (!event?.title || !event.timeRange || !event.category) return null;
+
   return (
     <div className="mb-3">
       <div
@@ -102,7 +109,7 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
       >
         <div
           className="flex-shrink-0 w-3 h-full min-h-[3rem] rounded-l-md mr-3"
-          style={{ backgroundColor: event.category.color }}
+          style={{ backgroundColor: event.category.color || '#8B5CF6' }}
         />
 
         <div className="flex-grow">
