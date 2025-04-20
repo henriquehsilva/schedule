@@ -36,9 +36,10 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
         const q = query(
           collection(db, 'observations'),
           where('date', '==', today),
-          where('title', '==', event.title)
+          where('title', '==', event.title),
+          where('startTime', '==', event.timeRange.startTime) // ⬅️ aqui
         );
-
+  
         const snapshot = await getDocs(q);
         if (!snapshot.empty) {
           const docData = snapshot.docs[0];
@@ -51,15 +52,15 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
         console.error('Erro ao buscar observação:', error);
       }
     };
-
+  
     fetchObservation();
-  }, [event.title, today]);
-
+  }, [event.title, event.timeRange.startTime, today]); // ⬅️ adiciona dependência
+  
   const handleToggleComplete = async () => {
     const updated = !localCompleted;
     setLocalCompleted(updated);
     dispatch({ type: 'TOGGLE_EVENT_COMPLETED', payload: event.id });
-
+  
     try {
       if (observationId) {
         const ref = doc(db, 'observations', observationId);
@@ -68,6 +69,7 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
         const newDoc = await addDoc(collection(db, 'observations'), {
           date: today,
           title: event.title,
+          startTime: event.timeRange.startTime, // ⬅️ adiciona
           observation: '',
           completed: updated,
           createdAt: serverTimestamp()
@@ -78,7 +80,7 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
       console.error('Erro ao atualizar status de conclusão:', error);
     }
   };
-
+  
   const handleSaveObservation = async () => {
     try {
       if (observationId) {
@@ -88,13 +90,14 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
         const newDoc = await addDoc(collection(db, 'observations'), {
           date: today,
           title: event.title,
+          startTime: event.timeRange.startTime, // ⬅️ adiciona
           observation: observation.trim(),
           completed: localCompleted,
           createdAt: serverTimestamp()
         });
         setObservationId(newDoc.id);
       }
-
+  
       setIsSaved(true);
       alert('Observação salva com sucesso!');
     } catch (error) {
