@@ -14,13 +14,19 @@ export const formatTime = (timeString: string): string => {
 };
 
 export const formatDateHeader = (date: Date): string => {
-  return date.toLocaleDateString('pt-BR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  });
+  try {
+    return date.toLocaleDateString('pt-BR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  } catch (error) {
+    console.error("Erro ao formatar data:", error);
+    return date.toDateString(); // fallback simples
+  }
 };
+
 
 export const getEventsForDay = (events: Event[], date: Date): Event[] => {
   const dayOfWeek = getDayOfWeek(date);
