@@ -49,8 +49,18 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
     fetchObservation();
   }, [event.title, today]);
 
-  const handleToggleComplete = () => {
+  const handleToggleComplete = async () => {
+    const updatedStatus = !event.completed;
+
     dispatch({ type: 'TOGGLE_EVENT_COMPLETED', payload: event.id });
+  
+    try {
+      // Atualiza o campo 'completed' do evento no Firestore
+      const ref = doc(db, 'events', event.id); // event.id precisa ser o ID real no Firebase
+      await updateDoc(ref, { completed: updatedStatus });
+    } catch (error) {
+      console.error('Erro ao atualizar evento:', error);
+    }
   };
 
   const handleSaveObservation = async () => {
