@@ -5,7 +5,7 @@ export const defaultEvents: Event[] = [
   // Monday, Wednesday, Friday
   {
     id: uuidv4(),
-    title: 'Treinamento em Vim Editor',
+    title: 'Estudo de UX & UI Design',
     timeRange: { startTime: '07:00', endTime: '08:00' },
     completed: false,
     daysOfWeek: ['monday', 'wednesday', 'friday'],
@@ -73,7 +73,7 @@ export const defaultEvents: Event[] = [
   },
   {
     id: uuidv4(),
-    title: 'Janta',
+    title: 'Jantar',
     timeRange: { startTime: '19:00', endTime: '20:00' },
     completed: false,
     daysOfWeek: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
@@ -89,7 +89,7 @@ export const defaultEvents: Event[] = [
   },
   {
     id: uuidv4(),
-    title: 'Estudo Elixir',
+    title: 'Estudo Software Engineering',
     timeRange: { startTime: '21:00', endTime: '22:00' },
     completed: false,
     daysOfWeek: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
