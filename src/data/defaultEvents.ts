@@ -5,7 +5,7 @@ export const defaultEvents: Event[] = [
   // Monday, Wednesday, Friday
   {
     id: uuidv4(),
-    title: 'Meditação',
+    title: 'Estudo de UX & UI Design',
     timeRange: { startTime: '07:00', endTime: '08:00' },
     completed: false,
     daysOfWeek: ['monday', 'wednesday', 'friday'],
